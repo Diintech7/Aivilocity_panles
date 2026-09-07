@@ -13,6 +13,15 @@ const AdminManagement = () => {
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(true);
 
+  // Check if user is superadmin
+  useEffect(() => {
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'superadmin') {
+      toast.error('Access Denied: Super Admin only');
+      navigate('/');
+    }
+  }, [navigate]);
+
   // Fetch admins
   const fetchAdmins = async () => {
     setLoading(true);
