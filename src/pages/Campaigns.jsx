@@ -4,101 +4,34 @@ import {
   ChevronLeft, Star, ToggleLeft, ToggleRight,
   Megaphone, Calendar, Users, IndianRupee,
   CheckCircle, Clock, XCircle, Tag, Building2,
-  List, PlusCircle
+  List, PlusCircle, Sparkles, Loader2, Lightbulb, Search
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 const CATEGORIES = ['Marketing', 'Sales', 'Product Launch', 'Brand Awareness', 'Social Media', 'Customer Retention', 'Referral', 'Other'];
 const STATUSES = ['Active', 'Inactive', 'Draft', 'Completed'];
 
-const initialCampaigns = [
-  {
-    id: 1,
-    title: 'Diwali Mega Sale Campaign',
-    description: 'Promote our exclusive Diwali offers across all social media platforms and earn great rewards.',
-    category: 'Marketing',
-    company: 'Ailocity Pvt. Ltd.',
-    reward: 5000,
-    deadline: '2025-11-01T18:00',
-    image: null,
-    totalSlots: 100,
-    filledSlots: 68,
-    requirements: ['Post on Instagram with hashtag #AilocityDiwali', 'Min 500 followers', 'Share 2 stories'],
-    status: 'Active',
-    featured: true,
-    createdAt: '2025-10-01',
-    goal: 'Our goal is to reach 1 million impressions during the Diwali season and increase brand awareness by 40% across all digital platforms.',
-    about: 'Ailocity Diwali Campaign is our flagship yearly initiative that rewards top-performing content creators and social media influencers for spreading joy and brand love during the festive season.',
-    team: [
-      { name: 'Vivek Kumar', role: 'Campaign Manager' },
-      { name: 'Priya Patel', role: 'Content Strategist' },
-      { name: 'Rohit Sharma', role: 'Social Media Lead' },
-    ],
-    conditions: ['Participants must be 18 years or older.', 'Content must be original and not plagiarised.', 'Reward will be credited within 7 working days after verification.', 'Ailocity reserves the right to disqualify any participant.']
-  },
-  {
-    id: 2,
-    title: 'New Year Brand Awareness',
-    description: 'Spread the word about Ailocity products and services during the New Year season.',
-    category: 'Brand Awareness',
-    company: 'Ailocity Pvt. Ltd.',
-    reward: 3000,
-    deadline: '2025-12-31T23:59',
-    image: null,
-    totalSlots: 50,
-    filledSlots: 12,
-    requirements: ['Create a YouTube short', 'Tag 5 friends', 'Use #AilocityNewYear'],
-    status: 'Active',
-    featured: false,
-    createdAt: '2025-11-15',
-    goal: 'Generate 500K+ reach on social platforms and onboard 200 new users during the New Year campaign period.',
-    about: 'This campaign is designed to kickstart the new year with maximum brand visibility through organic user-generated content.',
-    team: [
-      { name: 'Anjali Singh', role: 'Brand Manager' },
-      { name: 'Sandeep Yadav', role: 'Digital Marketer' },
-    ],
-    conditions: ['Content must include official campaign hashtag.', 'Minimum account age of 3 months required.', 'One entry per participant only.']
-  },
-  {
-    id: 3,
-    title: 'Referral Bonus Drive',
-    description: 'Refer your friends and colleagues to join Ailocity platform and earn exciting bonuses.',
-    category: 'Referral',
-    company: 'Ailocity Pvt. Ltd.',
-    reward: 1500,
-    deadline: '2025-10-15T23:59',
-    image: null,
-    totalSlots: 200,
-    filledSlots: 200,
-    requirements: ['Refer minimum 3 people', 'All referrals must complete signup'],
-    status: 'Completed',
-    featured: false,
-    createdAt: '2025-09-01'
-  },
-  {
-    id: 4,
-    title: 'Social Media Blitz Q4',
-    description: 'Create engaging social media content to boost Ailocity presence this quarter.',
-    category: 'Social Media',
-    company: 'Ailocity Pvt. Ltd.',
-    reward: 2500,
-    deadline: '2025-12-15T18:00',
-    image: null,
-    totalSlots: 75,
-    filledSlots: 0,
-    requirements: ['LinkedIn post with 200+ words', 'Twitter thread (5 tweets)', 'Facebook post with photo'],
-    status: 'Draft',
-    featured: true,
-    createdAt: '2025-10-20'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const BACKEND_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+export const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:') || path.startsWith('data:')) {
+    return path;
   }
-];
+  const cleanPath = path.replace(/\\/g, '/');
+  const normalizedPath = cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`;
+  return `${BACKEND_URL}${normalizedPath}`;
+};
 
 const emptyForm = {
   title: '',
   description: '',
   category: CATEGORIES[0],
   company: '',
+  training: '',
   reward: '',
+  startDate: '',
   deadline: '',
   image: null,
   totalSlots: '',
@@ -128,7 +61,7 @@ const CampaignCard = ({ c, onView, onEdit, onDelete, onToggleStatus }) => {
       {/* Banner */}
       <div className="h-36 bg-gradient-to-br from-orange-400 to-orange-600 relative flex items-center justify-center">
         {c.image ? (
-          <img src={c.image} alt={c.title} className="w-full h-full object-cover absolute inset-0" />
+          <img src={getImageUrl(c.image)} alt={c.title} className="w-full h-full object-cover absolute inset-0" />
         ) : (
           <Megaphone size={48} className="text-white/40" />
         )}
@@ -179,10 +112,10 @@ const CampaignCard = ({ c, onView, onEdit, onDelete, onToggleStatus }) => {
         <div className="flex items-center gap-2">
           <button onClick={() => onView(c)} title="View Details" className="text-blue-500 hover:text-blue-700 transition-colors"><Eye size={17}/></button>
           <button onClick={() => onEdit(c)} title="Edit" className="text-gray-400 hover:text-gray-700 transition-colors"><Edit2 size={17}/></button>
-          <button onClick={() => onDelete(c.id)} title="Delete" className="text-orange-500 hover:text-orange-700 transition-colors"><Trash2 size={17}/></button>
+          <button onClick={() => onDelete(c._id)} title="Delete" className="text-orange-500 hover:text-orange-700 transition-colors"><Trash2 size={17}/></button>
         </div>
         <button
-          onClick={() => onToggleStatus(c.id)}
+          onClick={() => onToggleStatus(c._id)}
           className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${c.status === 'Active' ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
         >
           {c.status === 'Active' ? <><ToggleRight size={15}/> Deactivate</> : <><ToggleLeft size={15}/> Activate</>}
@@ -192,9 +125,24 @@ const CampaignCard = ({ c, onView, onEdit, onDelete, onToggleStatus }) => {
   );
 };
 
+const formatForDateTimeInput = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return '';
+  }
+};
+
 // ─── Campaign Form ─────────────────────────────────────────────────────────────
-const CampaignForm = ({ initial, onSave, onCancel, title }) => {
+const CampaignForm = ({ initial, onSave, onCancel, title, trainings }) => {
   const [form, setForm] = useState(initial);
+  const [imageFile, setImageFile] = useState(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   const setField = (k, v) => setForm(f => ({...f, [k]: v}));
 
@@ -207,15 +155,73 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
   const removeReq = (i) => setField('requirements', form.requirements.filter((_, idx) => idx !== i));
 
   const handleImage = (e) => {
-    if (e.target.files?.[0]) setField('image', URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      setField('image', URL.createObjectURL(file));
+    }
+  };
+
+  const handleGenerateAI = async (customPrompt) => {
+    const promptToUse = (typeof customPrompt === 'string' ? customPrompt : aiPrompt).trim();
+    if (!promptToUse) {
+      toast.warning('Please enter a brief campaign idea/prompt first!');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/campaigns/ai-generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ prompt: promptToUse })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success && data.campaign) {
+        const c = data.campaign;
+        setForm(prev => ({
+          ...prev,
+          title: c.title || prev.title,
+          description: c.description || prev.description,
+          category: CATEGORIES.includes(c.category) ? c.category : prev.category,
+          company: c.company || prev.company,
+          reward: c.reward !== undefined && c.reward !== '' ? c.reward : prev.reward,
+          startDate: formatForDateTimeInput(c.startDate) || prev.startDate,
+          deadline: formatForDateTimeInput(c.deadline) || prev.deadline,
+          totalSlots: c.totalSlots !== undefined && c.totalSlots !== '' ? c.totalSlots : prev.totalSlots,
+          goal: c.goal || prev.goal,
+          about: c.about || prev.about,
+          requirements: Array.isArray(c.requirements) && c.requirements.length > 0 ? c.requirements : prev.requirements,
+          conditions: Array.isArray(c.conditions) && c.conditions.length > 0 ? c.conditions : prev.conditions,
+        }));
+
+        if (data.source === 'mock_fallback') {
+          toast.info('✨ Campaign template auto-filled! Set GEMINI_API_KEY in backend/.env for live Google Gemini 1.5 Flash.');
+        } else {
+          toast.success('✨ Campaign details generated with Google Gemini! Please review and upload banner image.');
+        }
+      } else {
+        toast.error(data.message || 'Failed to generate campaign with AI');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error while generating with AI');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.title || !form.company || !form.reward || !form.deadline || !form.totalSlots) {
+    if (!form.title || !form.company || !form.reward || !form.startDate || !form.deadline || !form.totalSlots) {
       toast.error('Please fill all required fields'); return;
     }
-    onSave(form);
+    onSave(form, imageFile);
   };
 
   return (
@@ -223,6 +229,87 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
       <div className="flex items-center gap-3 mb-2">
         <button type="button" onClick={onCancel} className="text-gray-400 hover:text-gray-700 transition-colors"><ChevronLeft size={24}/></button>
         <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+      </div>
+
+      {/* ─── AI Magic Auto-Fill ─── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-50 via-indigo-50/60 to-orange-50/40 border border-purple-200/80 rounded-2xl p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-purple-500/20">
+              <Sparkles size={19} className="animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-gray-900 tracking-tight">AI Smart Auto-Fill</h3>
+                <span className="px-2 py-0.5 text-[11px] font-bold bg-purple-100 text-purple-700 rounded-full border border-purple-200">
+                  Google Gemini 1.5 Flash
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Bas 1 line me campaign ka idea likhiye. AI title, description, category, reward, dates, goal, requirements sab auto-fill kar dega!
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <input
+            type="text"
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleGenerateAI();
+              }
+            }}
+            placeholder="e.g. Swiggy delivery partner onboarding, reward ₹250 per partner, target 500 slots, 30 days..."
+            className="flex-1 border border-purple-200 bg-white/90 rounded-xl px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all shadow-inner"
+          />
+          <button
+            type="button"
+            onClick={() => handleGenerateAI()}
+            disabled={aiLoading}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-[0.99] text-white text-sm font-semibold rounded-xl shadow-md shadow-purple-600/20 disabled:opacity-75 disabled:cursor-not-allowed transition-all shrink-0 cursor-pointer"
+          >
+            {aiLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                <span>Auto-Fill with AI ✨</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Quick prompt chips */}
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 pt-2 border-t border-purple-100/80">
+          <span className="text-[11px] font-semibold text-purple-700 flex items-center gap-1 mr-1">
+            <Lightbulb size={12} /> Quick Ideas:
+          </span>
+          {[
+            'HDFC Credit Card Acquisition (₹250/card, 500 slots)',
+            'Swiggy Delivery Partner Onboarding (₹300/onboard)',
+            'Angel One Demat Account Drive (₹200/account)',
+            'Campus Ambassador Referral Program (₹150/lead)'
+          ].map((idea, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => {
+                setAiPrompt(idea);
+                handleGenerateAI(idea);
+              }}
+              className="text-[11px] bg-white/90 hover:bg-purple-100 hover:text-purple-800 border border-purple-200/80 text-gray-600 rounded-lg px-2.5 py-1 transition-all cursor-pointer"
+            >
+              {idea}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -260,10 +347,25 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
                   placeholder="e.g. Ailocity Pvt. Ltd." />
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Associated Training</label>
+                <select value={form.training || ''} onChange={e=>setField('training',e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
+                  <option value="">-- None --</option>
+                  {trainings.map(t => (
+                    <option key={t._id} value={t._id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reward Amount (₹) *</label>
                 <input type="number" value={form.reward} onChange={e=>setField('reward',e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   placeholder="e.g. 5000" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Starting Date *</label>
+                <input type="datetime-local" value={form.startDate} onChange={e=>setField('startDate',e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Deadline *</label>
@@ -285,26 +387,6 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
               </div>
             </div>
 
-            {/* Requirements */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Requirements (Dynamic List) *</label>
-              <div className="flex flex-col gap-2">
-                {form.requirements.map((r, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input type="text" value={r} onChange={e=>handleReqChange(i, e.target.value)}
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder={`Requirement ${i+1}`} />
-                    {form.requirements.length > 1 && (
-                      <button type="button" onClick={()=>removeReq(i)} className="text-red-400 hover:text-red-600"><X size={16}/></button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" onClick={addReq}
-                  className="flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 font-medium mt-1">
-                  <PlusCircle size={16}/> Add Requirement
-                </button>
-              </div>
-            </div>
 
             {/* Goal */}
             <div>
@@ -322,29 +404,6 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
                 placeholder="Detailed information about this campaign..." />
             </div>
 
-            {/* Team */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Team Members</label>
-              <div className="flex flex-col gap-2">
-                {(form.team || [{ name: '', role: '' }]).map((member, i) => (
-                  <div key={i} className="flex gap-2 items-center">
-                    <input type="text" value={member.name} onChange={e => {
-                      const t = [...(form.team || [])]; t[i] = {...t[i], name: e.target.value}; setField('team', t);
-                    }} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Name" />
-                    <input type="text" value={member.role} onChange={e => {
-                      const t = [...(form.team || [])]; t[i] = {...t[i], role: e.target.value}; setField('team', t);
-                    }} className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Role" />
-                    {(form.team || []).length > 1 && (
-                      <button type="button" onClick={() => setField('team', form.team.filter((_,idx)=>idx!==i))} className="text-red-400 hover:text-red-600"><X size={16}/></button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" onClick={() => setField('team', [...(form.team||[]), {name:'',role:''}])}
-                  className="flex items-center gap-1.5 text-sm text-orange-600 hover:text-orange-700 font-medium mt-1">
-                  <PlusCircle size={16}/> Add Team Member
-                </button>
-              </div>
-            </div>
 
             {/* Conditions */}
             <div>
@@ -378,7 +437,7 @@ const CampaignForm = ({ initial, onSave, onCancel, title }) => {
             <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wider mb-4">Campaign Image</h3>
             <div className="relative w-full h-40 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center overflow-hidden bg-gray-50 group hover:border-orange-400 transition-colors cursor-pointer">
               {form.image ? (
-                <img src={form.image} alt="preview" className="w-full h-full object-cover absolute inset-0" />
+                <img src={getImageUrl(form.image)} alt="preview" className="w-full h-full object-cover absolute inset-0" />
               ) : (
                 <>
                   <Upload size={28} className="text-gray-300 group-hover:text-orange-400 transition-colors"/>
@@ -434,7 +493,6 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
     { id: 'overview', label: 'Overview' },
     { id: 'goal', label: '🎯 Goal' },
     { id: 'about', label: 'ℹ️ About' },
-    { id: 'team', label: '👥 Team' },
     { id: 'conditions', label: '📋 Conditions' },
   ];
 
@@ -451,7 +509,7 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
 
       {/* Banner */}
       <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl h-48 flex items-center justify-center relative overflow-hidden shadow">
-        {c.image ? <img src={c.image} alt={c.title} className="w-full h-full object-cover absolute inset-0"/> : <Megaphone size={64} className="text-white/40"/>}
+        {c.image ? <img src={getImageUrl(c.image)} alt={c.title} className="w-full h-full object-cover absolute inset-0"/> : <Megaphone size={64} className="text-white/40"/>}
         {c.featured && (
           <span className="absolute top-4 left-4 flex items-center gap-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow">
             <Star size={12}/> Featured
@@ -491,7 +549,9 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
                   {[
                     { label: 'Category', value: c.category, icon: <Tag size={14}/> },
                     { label: 'Company', value: c.company, icon: <Building2 size={14}/> },
+                    { label: 'Training', value: c.training?.name || 'None', icon: <Tag size={14}/> },
                     { label: 'Reward', value: `₹${Number(c.reward).toLocaleString()}`, icon: <IndianRupee size={14}/> },
+                    { label: 'Start Date', value: c.startDate ? new Date(c.startDate).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'N/A', icon: <Calendar size={14}/> },
                     { label: 'Deadline', value: c.deadline ? new Date(c.deadline).toLocaleString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : 'N/A', icon: <Calendar size={14}/> },
                     { label: 'Total Slots', value: c.totalSlots, icon: <Users size={14}/> },
                     { label: 'Filled Slots', value: c.filledSlots, icon: <CheckCircle size={14}/> },
@@ -513,17 +573,7 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                <h3 className="font-bold text-gray-800 mb-4">Requirements</h3>
-                <ul className="space-y-2.5">
-                  {c.requirements.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                      <CheckCircle size={16} className="text-orange-500 mt-0.5 shrink-0"/>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+
             </div>
           )}
 
@@ -551,31 +601,7 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
             </div>
           )}
 
-          {activeTab === 'team' && (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-xl">👥</div>
-                <h3 className="font-bold text-gray-900 text-lg">Campaign Team</h3>
-              </div>
-              {(c.team || []).length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(c.team || []).map((member, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                        {member.name?.charAt(0) || '?'}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{member.name}</p>
-                        <p className="text-sm text-orange-500 font-medium">{member.role}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 italic">No team members specified.</p>
-              )}
-            </div>
-          )}
+
 
           {activeTab === 'conditions' && (
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8">
@@ -608,7 +634,6 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
               <div className="flex justify-between text-sm"><span className="text-gray-500">Featured</span><span className="font-medium text-gray-800">{c.featured ? 'Yes ⭐' : 'No'}</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Created</span><span className="font-medium text-gray-800">{c.createdAt || 'N/A'}</span></div>
               <div className="flex justify-between text-sm"><span className="text-gray-500">Available</span><span className="font-medium text-gray-800">{c.totalSlots - c.filledSlots} slots</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Team Size</span><span className="font-medium text-gray-800">{(c.team||[]).length} members</span></div>
             </div>
           </div>
         </div>
@@ -619,41 +644,143 @@ const CampaignDetails = ({ c, onBack, onEdit }) => {
 
 // ─── Main Campaigns Component ──────────────────────────────────────────────────
 const Campaigns = () => {
-  const [campaigns, setCampaigns] = useState(initialCampaigns);
+  const [campaigns, setCampaigns] = useState([]);
+  const [trainings, setTrainings] = useState([]);
   const [view, setView] = useState('list'); // list | create | edit | detail
   const [selected, setSelected] = useState(null);
   const [filterStatus, setFilterStatus] = useState('All');
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const handleToggleStatus = (id) => {
-    setCampaigns(prev => prev.map(c => {
-      if (c.id === id) {
-        const newStatus = c.status === 'Active' ? 'Inactive' : 'Active';
-        toast.info(`Campaign ${newStatus}`);
-        return {...c, status: newStatus};
+  const fetchCampaigns = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/campaigns`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setCampaigns(data);
+    } catch (err) {
+      toast.error('Failed to fetch campaigns');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTrainings = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/trainings`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTrainings(data.data || data); // Adjust depending on your training API response structure
       }
-      return c;
-    }));
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this campaign?')) {
-      setCampaigns(prev => prev.filter(c => c.id !== id));
-      toast.success('Campaign deleted!');
-      if (view === 'detail') setView('list');
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleSave = (form) => {
-    if (selected) {
-      setCampaigns(prev => prev.map(c => c.id === selected.id ? {...c, ...form} : c));
-      toast.success('Campaign updated!');
-    } else {
-      setCampaigns(prev => [...prev, {...form, id: Date.now(), filledSlots: 0, createdAt: new Date().toISOString().split('T')[0]}]);
-      toast.success('Campaign created!');
+  React.useEffect(() => {
+    fetchCampaigns();
+    fetchTrainings();
+  }, []);
+
+  const handleToggleStatus = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/campaigns/${id}/status`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCampaigns(prev => prev.map(c => c._id === id ? updated : c));
+        toast.info(`Campaign status updated`);
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch (error) {
+      toast.error('Network error');
     }
-    setSelected(null);
-    setView('list');
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this campaign?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/campaigns/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setCampaigns(prev => prev.filter(c => c._id !== id));
+          toast.success('Campaign deleted!');
+          if (view === 'detail') setView('list');
+        } else {
+          toast.error('Failed to delete campaign');
+        }
+      } catch (err) {
+        toast.error('Network error');
+      }
+    }
+  };
+
+  const handleSave = async (form, imageFile) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const formData = new FormData();
+      Object.keys(form).forEach(key => {
+        if (key === 'requirements' || key === 'conditions') {
+          if (Array.isArray(form[key])) {
+            form[key].forEach(val => {
+              if (val) formData.append(key, val);
+            });
+          }
+        } else if (key === 'team') {
+          // Team formatting if needed
+        } else if (key === 'image') {
+          // Skip local blob url string; real imageFile is attached below
+        } else if (form[key] !== undefined && form[key] !== null) {
+          formData.append(key, form[key]);
+        }
+      });
+
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const url = selected ? `${import.meta.env.VITE_API_BASE_URL}/campaigns/${selected._id}` : `${import.meta.env.VITE_API_BASE_URL}/campaigns`;
+      const method = selected ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData
+      });
+
+      if (res.ok) {
+        const savedCampaign = await res.json();
+        if (selected) {
+          setCampaigns(prev => prev.map(c => c._id === selected._id ? savedCampaign : c));
+          toast.success('Campaign updated!');
+        } else {
+          setCampaigns(prev => [...prev, savedCampaign]);
+          toast.success('Campaign created!');
+        }
+        setSelected(null);
+        setView('list');
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.message || 'Failed to save campaign');
+      }
+    } catch (err) {
+      toast.error('Network error');
+    }
   };
 
   const filtered = campaigns.filter(c => {
@@ -671,10 +798,12 @@ const Campaigns = () => {
   };
 
   if (view === 'create') {
-    return <CampaignForm title="Create Campaign" initial={{...emptyForm}} onSave={handleSave} onCancel={() => { setSelected(null); setView('list'); }} />;
+    return <CampaignForm title="Create Campaign" initial={{...emptyForm}} onSave={handleSave} onCancel={() => { setSelected(null); setView('list'); }} trainings={trainings} />;
   }
   if (view === 'edit' && selected) {
-    return <CampaignForm title="Edit Campaign" initial={{...selected}} onSave={handleSave} onCancel={() => { setSelected(null); setView('list'); }} />;
+    // If training is populated, map it to its ID for the form
+    const editInitial = { ...selected, training: selected.training?._id || selected.training || '' };
+    return <CampaignForm title="Edit Campaign" initial={editInitial} onSave={handleSave} onCancel={() => { setSelected(null); setView('list'); }} trainings={trainings} />;
   }
   if (view === 'detail' && selected) {
     return <CampaignDetails c={selected} onBack={() => { setSelected(null); setView('list'); }} onEdit={(c) => { setSelected(c); setView('edit'); }} />;
@@ -695,33 +824,40 @@ const Campaigns = () => {
         </button>
       </div>
 
-      {/* Stats Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {Object.entries(counts).map(([status, count]) => (
-          <button
-            key={status}
-            onClick={() => setFilterStatus(status)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status ? 'bg-[#ff5a1f] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'}`}
-          >
-            {status} <span className="ml-1 opacity-75">({count})</span>
-          </button>
-        ))}
-      </div>
+      {/* Filters & Search Controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Stats Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {Object.entries(counts).map(([status, count]) => (
+            <button
+              key={status}
+              onClick={() => setFilterStatus(status)}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status ? 'bg-[#ff5a1f] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'}`}
+            >
+              {status} <span className="ml-1 opacity-75">({count})</span>
+            </button>
+          ))}
+        </div>
 
-      {/* Search */}
-      <div className="relative">
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search campaigns..."
-          className="w-full sm:w-80 border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 pr-10"
-        />
-        <List size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"/>
+        {/* Search Bar on Right */}
+        <div className="relative w-full sm:w-80 self-end lg:self-auto shrink-0">
+          <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search campaigns..."
+            className="w-full border border-gray-300 bg-white rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
+          />
+        </div>
       </div>
 
       {/* Campaign Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center items-center py-20 text-orange-500">
+          <Clock className="animate-spin" size={32} />
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm py-16 flex flex-col items-center gap-3 text-gray-400">
           <Megaphone size={48} className="opacity-30"/>
           <p className="font-medium">No campaigns found</p>
@@ -733,7 +869,7 @@ const Campaigns = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
           {filtered.map(c => (
             <CampaignCard
-              key={c.id}
+              key={c._id}
               c={c}
               onView={(c) => { setSelected(c); setView('detail'); }}
               onEdit={(c) => { setSelected(c); setView('edit'); }}

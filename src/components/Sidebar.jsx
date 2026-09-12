@@ -70,13 +70,16 @@ const Sidebar = ({ isOpen, closeSidebar, isDesktopCollapsed }) => {
       <div className={`p-6 flex items-center ${isDesktopCollapsed ? 'justify-center' : 'justify-between'} shrink-0`}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 flex items-center justify-center shrink-0">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+            <img src="/logo.png" alt="Ailocity Logo" className="w-full h-full object-contain" />
           </div>
           {!isDesktopCollapsed && (
             <div>
-              <h1 className="text-white font-bold text-lg whitespace-nowrap">
-                {userRole === 'superadmin' ? 'SUPER ADMIN' : 'ADMIN'}
+              <h1 className="text-white font-black text-base tracking-wide whitespace-nowrap">
+                AILOCITY
               </h1>
+              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider block -mt-0.5">
+                {userRole === 'superadmin' ? 'SUPER ADMIN' : userRole === 'client' ? 'CLIENT PORTAL' : 'ADMIN PANEL'}
+              </span>
             </div>
           )}
         </div>

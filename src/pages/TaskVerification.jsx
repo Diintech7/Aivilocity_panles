@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircle2, XCircle, Eye, ChevronLeft, User, Calendar,
   Briefcase, Send, Search, AlertCircle, Tag, MessageSquare,
@@ -73,13 +73,11 @@ const VerificationDetail = ({ task, onBack, onApprove, onReject }) => {
   const handleReject = () => {
     if (!rejectReason.trim()) { toast.error('Please enter a rejection reason.'); return; }
     onReject(task.id, rejectReason);
-    toast.error('Task Rejected!');
     onBack();
   };
 
   const handleApprove = () => {
     onApprove(task.id);
-    toast.success('Task Approved! Reward will be processed.');
     onBack();
   };
 
@@ -234,17 +232,90 @@ const VerificationDetail = ({ task, onBack, onApprove, onReject }) => {
 
 // ─── Main TaskVerification Component ──────────────────────────────────────────
 const TaskVerification = () => {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('Submitted');
   const [viewingTask, setViewingTask] = useState(null);
+  
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-  const handleApprove = (id) => {
-    setTasks(prev => prev.map(t => t.id === id ? {...t, status: 'Approved'} : t));
+  const fetchSubmissions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/tasks/submissions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const mapped = data.map(sub => ({
+          id: sub._id,
+          title: sub.taskId?.name || 'Unknown Task',
+          description: sub.taskId?.description || '',
+          campaign: sub.campaignId?.title || 'Unknown Campaign',
+          assignedTo: sub.bdId?.name || 'Unknown BA',
+          assignedEmail: sub.bdId?.email || '',
+          priority: 'Medium',
+          status: sub.status === 'Completed' ? 'Submitted' : sub.status,
+          deadline: sub.taskId?.endDate ? new Date(sub.taskId.endDate).toLocaleDateString() : 'N/A',
+          createdAt: new Date(sub.createdAt).toLocaleDateString(),
+          reward: sub.taskId?.price || 0,
+          submissionNote: sub.feedback || '',
+          rejectionReason: '',
+          comments: []
+        }));
+        setTasks(mapped);
+      }
+    } catch (err) {
+      toast.error('Failed to fetch submissions');
+    }
   };
 
-  const handleReject = (id, reason) => {
-    setTasks(prev => prev.map(t => t.id === id ? {...t, status: 'Rejected', rejectionReason: reason} : t));
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const handleApprove = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/tasks/submissions/${id}`, {
+        method: 'PATCH',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'Approved' })
+      });
+      if (res.ok) {
+        setTasks(prev => prev.map(t => t.id === id ? {...t, status: 'Approved'} : t));
+        toast.success('Task Approved!');
+      } else {
+        toast.error('Failed to approve task');
+      }
+    } catch (e) {
+      toast.error('Network Error');
+    }
+  };
+
+  const handleReject = async (id, reason) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/tasks/submissions/${id}`, {
+        method: 'PATCH',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'Rejected' }) // Ideally backend should save reason too
+      });
+      if (res.ok) {
+        setTasks(prev => prev.map(t => t.id === id ? {...t, status: 'Rejected', rejectionReason: reason} : t));
+        toast.error('Task Rejected!');
+      } else {
+        toast.error('Failed to reject task');
+      }
+    } catch (e) {
+      toast.error('Network Error');
+    }
   };
 
   const tabs = [
@@ -416,11 +487,11 @@ const TaskVerification = () => {
                         </button>
                         {task.status === 'Submitted' && (
                           <>
-                            <button onClick={() => { handleApprove(task.id); toast.success('Task Approved!'); }}
+                            <button onClick={() => { handleApprove(task.id); }}
                               className="text-green-600 hover:text-green-800 transition-colors" title="Approve">
                               <CheckCircle2 size={18}/>
                             </button>
-                            <button onClick={() => { handleReject(task.id, 'Rejected by admin'); toast.error('Task Rejected!'); }}
+                            <button onClick={() => { handleReject(task.id, 'Rejected by admin'); }}
                               className="text-red-500 hover:text-red-700 transition-colors" title="Reject">
                               <XCircle size={18}/>
                             </button>
